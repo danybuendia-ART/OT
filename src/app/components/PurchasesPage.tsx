@@ -1,16 +1,43 @@
 import { useState, useEffect } from 'react';
 import { getMaterials, getProjects, addMaterial, updateMaterial, deleteMaterial } from '../lib/storage';
-import { Material, Project } from '../lib/types';
+import { Material, MaterialPriority, Project } from '../lib/types';
 import { Button } from './ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { Plus, ShoppingCart, Edit2, Trash2, Package, Clock, Truck, CheckCircle2 } from 'lucide-react';
+import { Plus, ShoppingCart, Edit2, Trash2, Package, Clock, Truck, CheckCircle2, Flame, AlertTriangle, Minus } from 'lucide-react';
 import { toast } from 'sonner';
+
+const PRIORITY_CONFIG: Record<MaterialPriority, { label: string; icon: React.ReactNode; colorClass: string; badgeClass: string }> = {
+  urgente: {
+    label: 'Urgente',
+    icon: <Flame className="w-3 h-3" />,
+    colorClass: 'text-red-600',
+    badgeClass: 'bg-red-100 text-red-700 border-red-200',
+  },
+  alta: {
+    label: 'Alta',
+    icon: <AlertTriangle className="w-3 h-3" />,
+    colorClass: 'text-orange-600',
+    badgeClass: 'bg-orange-100 text-orange-700 border-orange-200',
+  },
+  normal: {
+    label: 'Normal',
+    icon: <Clock className="w-3 h-3" />,
+    colorClass: 'text-blue-600',
+    badgeClass: 'bg-blue-100 text-blue-700 border-blue-200',
+  },
+  baja: {
+    label: 'Baja',
+    icon: <Minus className="w-3 h-3" />,
+    colorClass: 'text-gray-500',
+    badgeClass: 'bg-gray-100 text-gray-600 border-gray-200',
+  },
+};
 
 export function PurchasesPage() {
   const [materials, setMaterials] = useState<Material[]>([]);
@@ -26,6 +53,7 @@ export function PurchasesPage() {
     quantity: 1,
     unit: '',
     status: 'en espera' as Material['status'],
+    priority: 'normal' as MaterialPriority,
   });
 
   useEffect(() => {
@@ -52,6 +80,7 @@ export function PurchasesPage() {
       quantity: 1,
       unit: '',
       status: 'en espera',
+      priority: 'normal',
     });
     loadData();
     toast.success('Material agregado exitosamente');
@@ -72,6 +101,7 @@ export function PurchasesPage() {
       quantity: editingMaterial.quantity,
       unit: editingMaterial.unit,
       status: editingMaterial.status,
+      priority: editingMaterial.priority,
     });
 
     setIsEditDialogOpen(false);
@@ -95,43 +125,57 @@ export function PurchasesPage() {
 
   const getStatusIcon = (status: Material['status']) => {
     switch (status) {
-      case 'en espera':
-        return <Clock className="w-4 h-4" />;
-      case 'en camino':
-        return <Truck className="w-4 h-4" />;
-      case 'entregado':
-        return <CheckCircle2 className="w-4 h-4" />;
+      case 'en espera': return <Clock className="w-4 h-4" />;
+      case 'en camino': return <Truck className="w-4 h-4" />;
+      case 'entregado': return <CheckCircle2 className="w-4 h-4" />;
     }
   };
 
-  const getStatusColor = (status: Material['status']) => {
+  const getStatusClass = (status: Material['status']) => {
     switch (status) {
-      case 'en espera':
-        return 'default';
-      case 'en camino':
-        return 'default';
-      case 'entregado':
-        return 'default';
+      case 'en espera': return 'bg-yellow-100 text-yellow-700 border-yellow-200';
+      case 'en camino': return 'bg-blue-100 text-blue-700 border-blue-200';
+      case 'entregado': return 'bg-green-100 text-green-700 border-green-200';
     }
   };
 
-  const canEdit = (material: Material) => {
-    return material.status !== 'en camino' && material.status !== 'entregado';
-  };
+  const canEdit = (material: Material) =>
+    material.status !== 'en camino' && material.status !== 'entregado';
 
   const filteredMaterials = selectedProject === 'all'
     ? materials
     : materials.filter(m => m.projectId === selectedProject);
 
-  const getProjectName = (projectId: string) => {
-    return projects.find(p => p.id === projectId)?.name || 'Desconocido';
-  };
+  // Sort: urgente first, then alta, normal, baja
+  const priorityOrder: MaterialPriority[] = ['urgente', 'alta', 'normal', 'baja'];
+  const sortedMaterials = [...filteredMaterials].sort(
+    (a, b) => priorityOrder.indexOf(a.priority) - priorityOrder.indexOf(b.priority)
+  );
+
+  const getProjectName = (projectId: string) =>
+    projects.find(p => p.id === projectId)?.name || 'Desconocido';
 
   const materialsByStatus = {
     'en espera': filteredMaterials.filter(m => m.status === 'en espera').length,
     'en camino': filteredMaterials.filter(m => m.status === 'en camino').length,
     'entregado': filteredMaterials.filter(m => m.status === 'entregado').length,
   };
+
+  const urgentCount = filteredMaterials.filter(m => m.priority === 'urgente' && m.status !== 'entregado').length;
+
+  const PrioritySelect = ({ value, onChange }: { value: MaterialPriority; onChange: (v: MaterialPriority) => void }) => (
+    <Select value={value} onValueChange={(v) => onChange(v as MaterialPriority)}>
+      <SelectTrigger>
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="urgente">🔴 Urgente — Se necesita de inmediato</SelectItem>
+        <SelectItem value="alta">🟠 Alta — Se necesita pronto</SelectItem>
+        <SelectItem value="normal">🔵 Normal — Plazo estándar</SelectItem>
+        <SelectItem value="baja">⚪ Baja — Sin prisa</SelectItem>
+      </SelectContent>
+    </Select>
+  );
 
   return (
     <div className="space-y-6">
@@ -216,7 +260,14 @@ export function PurchasesPage() {
                 </div>
               </div>
               <div>
-                <Label htmlFor="status">Estado</Label>
+                <Label>Prioridad de tiempo</Label>
+                <PrioritySelect
+                  value={newMaterial.priority}
+                  onChange={(v) => setNewMaterial({ ...newMaterial, priority: v })}
+                />
+              </div>
+              <div>
+                <Label htmlFor="status">Estado de entrega</Label>
                 <Select
                   value={newMaterial.status}
                   onValueChange={(value) => setNewMaterial({ ...newMaterial, status: value as Material['status'] })}
@@ -243,15 +294,25 @@ export function PurchasesPage() {
       </div>
 
       {/* Summary cards */}
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-4">
+        <Card className={urgentCount > 0 ? 'border-red-200 bg-red-50' : ''}>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Urgentes</CardTitle>
+            <Flame className={`h-4 w-4 ${urgentCount > 0 ? 'text-red-600' : 'text-gray-400'}`} />
+          </CardHeader>
+          <CardContent>
+            <div className={`text-2xl font-semibold ${urgentCount > 0 ? 'text-red-600' : ''}`}>{urgentCount}</div>
+            <p className="text-xs text-gray-500 mt-1">Requieren atención inmediata</p>
+          </CardContent>
+        </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">En Espera</CardTitle>
-            <Clock className="h-4 w-4 text-orange-600" />
+            <Clock className="h-4 w-4 text-yellow-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-semibold">{materialsByStatus['en espera']}</div>
-            <p className="text-xs text-gray-500 mt-1">Materiales pendientes</p>
+            <p className="text-xs text-gray-500 mt-1">Pendientes de gestión</p>
           </CardContent>
         </Card>
         <Card>
@@ -276,7 +337,7 @@ export function PurchasesPage() {
         </Card>
       </div>
 
-      {/* Filter by project */}
+      {/* Filter */}
       <div className="flex items-center gap-4">
         <Label htmlFor="filter-project">Filtrar por proyecto:</Label>
         <Select value={selectedProject} onValueChange={setSelectedProject}>
@@ -296,7 +357,7 @@ export function PurchasesPage() {
 
       {/* Materials list */}
       <div className="space-y-3">
-        {filteredMaterials.length === 0 ? (
+        {sortedMaterials.length === 0 ? (
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-12">
               <ShoppingCart className="w-12 h-12 text-gray-300 mb-3" />
@@ -304,55 +365,66 @@ export function PurchasesPage() {
             </CardContent>
           </Card>
         ) : (
-          filteredMaterials.map((material) => (
-            <Card key={material.id}>
-              <CardContent className="p-4">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <Package className="w-5 h-5 text-gray-400" />
-                      <h3 className="font-semibold">{material.name}</h3>
-                      <Badge variant={getStatusColor(material.status)} className="gap-1">
-                        {getStatusIcon(material.status)}
-                        {material.status}
-                      </Badge>
+          sortedMaterials.map((material) => {
+            const prio = PRIORITY_CONFIG[material.priority ?? 'normal'];
+            return (
+              <Card key={material.id} className={material.priority === 'urgente' && material.status !== 'entregado' ? 'border-red-200' : ''}>
+                <CardContent className="p-4">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-2 flex-wrap">
+                        <Package className="w-5 h-5 text-gray-400 shrink-0" />
+                        <h3 className="font-semibold">{material.name}</h3>
+                        {/* Priority badge */}
+                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-xs font-medium ${prio.badgeClass}`}>
+                          {prio.icon}
+                          {prio.label}
+                        </span>
+                        {/* Delivery status badge */}
+                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-xs font-medium ${getStatusClass(material.status)}`}>
+                          {getStatusIcon(material.status)}
+                          {material.status}
+                        </span>
+                      </div>
+                      {material.description && (
+                        <p className="text-sm text-gray-600 mb-2">{material.description}</p>
+                      )}
+                      <div className="flex items-center gap-6 text-sm text-gray-500 flex-wrap">
+                        <span>
+                          <strong>Cantidad:</strong> {material.quantity} {material.unit}
+                        </span>
+                        <span>
+                          <strong>Proyecto:</strong> {getProjectName(material.projectId)}
+                        </span>
+                        <span className="text-xs text-gray-400">
+                          Actualizado: {material.updatedAt.toLocaleDateString()}
+                        </span>
+                      </div>
                     </div>
-                    <p className="text-sm text-gray-600 mb-2">{material.description}</p>
-                    <div className="flex items-center gap-6 text-sm text-gray-500">
-                      <span>
-                        <strong>Cantidad:</strong> {material.quantity} {material.unit}
-                      </span>
-                      <span>
-                        <strong>Proyecto:</strong> {getProjectName(material.projectId)}
-                      </span>
-                      <span className="text-xs text-gray-400">
-                        Actualizado: {material.updatedAt.toLocaleDateString()}
-                      </span>
+                    <div className="flex gap-2 shrink-0">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleEditMaterial(material)}
+                        disabled={!canEdit(material)}
+                      >
+                        <Edit2 className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleDeleteMaterial(material)}
+                        disabled={!canEdit(material)}
+                        className={!canEdit(material) ? '' : 'hover:bg-red-50 hover:text-red-600 hover:border-red-200'}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
                     </div>
                   </div>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleEditMaterial(material)}
-                      disabled={!canEdit(material)}
-                    >
-                      <Edit2 className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleDeleteMaterial(material)}
-                      disabled={!canEdit(material)}
-                      className={!canEdit(material) ? '' : 'hover:bg-red-50 hover:text-red-600 hover:border-red-200'}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))
+                </CardContent>
+              </Card>
+            );
+          })
         )}
       </div>
 
@@ -408,7 +480,14 @@ export function PurchasesPage() {
                 </div>
               </div>
               <div>
-                <Label htmlFor="edit-status">Estado</Label>
+                <Label>Prioridad de tiempo</Label>
+                <PrioritySelect
+                  value={editingMaterial.priority ?? 'normal'}
+                  onChange={(v) => setEditingMaterial({ ...editingMaterial, priority: v })}
+                />
+              </div>
+              <div>
+                <Label htmlFor="edit-status">Estado de entrega</Label>
                 <Select
                   value={editingMaterial.status}
                   onValueChange={(value) => setEditingMaterial({ ...editingMaterial, status: value as Material['status'] })}

@@ -8,11 +8,16 @@ import { AccountPage } from "./components/AccountPage";
 import { CalendarPage } from "./components/CalendarPage";
 import { DashboardOverviewPage } from "./components/DashboardOverviewPage";
 import { PurchasesPage } from "./components/PurchasesPage";
+import { registerAcount } from "./components/registerAcount";
 
 export const router = createBrowserRouter([
   {
     path: "/login",
     Component: LoginPage,
+  },
+  {
+    path: "register",
+    Component: registerAcount,
   },
   {
     path: "/",
@@ -44,7 +49,7 @@ export const router = createBrowserRouter([
           {
             path: "purchases",
             Component: PurchasesPage,
-          },
+          }
         ],
       },
     ],

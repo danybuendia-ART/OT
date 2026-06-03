@@ -21,6 +21,8 @@ export interface Project {
   tasks: Task[];
 }
 
+export type MaterialPriority = 'urgente' | 'alta' | 'normal' | 'baja';
+
 export interface Material {
   id: string;
   projectId: string;
@@ -29,6 +31,7 @@ export interface Material {
   quantity: number;
   unit: string;
   status: 'en espera' | 'en camino' | 'entregado';
+  priority: MaterialPriority;
   createdAt: Date;
   updatedAt: Date;
 }

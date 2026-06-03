@@ -82,7 +82,7 @@ export function LoginPage() {
           </form>
 
           <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-            <p className="text-sm text-gray-600 mb-2">Usuarios de demostración:</p>
+            <p className="text-sm text-gray-600 mb-2">¿No tienes una cuenta? Regístrate <a href="/register" className="text-blue-600 hover:underline">aquí</a>.</p>
             <div className="text-xs space-y-1 text-gray-700">
               <div>📧 admin@example.com / 🔑 admin123</div>
               <div>📧 user@example.com / 🔑 user123</div>
