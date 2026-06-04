@@ -162,6 +162,9 @@ export function PurchasesPage() {
   };
 
   const urgentCount = filteredMaterials.filter(m => m.priority === 'urgente' && m.status !== 'entregado').length;
+  const AltaCount = filteredMaterials.filter(m => m.priority === 'alta' && m.status !== 'entregado').length;
+  const normalCount = filteredMaterials.filter(m => m.priority === 'normal' && m.status !== 'entregado').length;
+  const bajaCount = filteredMaterials.filter(m => m.priority === 'baja' && m.status !== 'entregado').length;
 
   const PrioritySelect = ({ value, onChange }: { value: MaterialPriority; onChange: (v: MaterialPriority) => void }) => (
     <Select value={value} onValueChange={(v) => onChange(v as MaterialPriority)}>
@@ -294,17 +297,7 @@ export function PurchasesPage() {
       </div>
 
       {/* Summary cards */}
-      <div className="grid gap-4 md:grid-cols-4">
-        <Card className={urgentCount > 0 ? 'border-red-200 bg-red-50' : ''}>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Urgentes</CardTitle>
-            <Flame className={`h-4 w-4 ${urgentCount > 0 ? 'text-red-600' : 'text-gray-400'}`} />
-          </CardHeader>
-          <CardContent>
-            <div className={`text-2xl font-semibold ${urgentCount > 0 ? 'text-red-600' : ''}`}>{urgentCount}</div>
-            <p className="text-xs text-gray-500 mt-1">Requieren atención inmediata</p>
-          </CardContent>
-        </Card>
+      <div className="grid gap-3 md:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">En Espera</CardTitle>
@@ -333,6 +326,48 @@ export function PurchasesPage() {
           <CardContent>
             <div className="text-2xl font-semibold">{materialsByStatus['entregado']}</div>
             <p className="text-xs text-gray-500 mt-1">Completados</p>
+          </CardContent>
+        </Card>
+      </div>
+      <div className="grid gap-4 md:grid-cols-4">
+        <Card className={urgentCount > 0 ? 'border-red-200 bg-red-50' : ''}>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Urgentes</CardTitle>
+            <Flame className={`h-4 w-4 ${urgentCount > 0 ? 'text-red-600' : 'text-gray-400'}`} />
+          </CardHeader>
+          <CardContent>
+            <div className={`text-2xl font-semibold ${urgentCount > 0 ? 'text-red-600' : ''}`}>{urgentCount}</div>
+            <p className="text-xs text-gray-500 mt-1">Requieren atención inmediata</p>
+          </CardContent>
+        </Card>
+        <Card className={AltaCount > 0 ? 'border-orange-200 bg-orange-50' : ''}>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Alta</CardTitle>
+            <AlertTriangle className={`h-4 w-4 ${AltaCount > 0 ? 'text-orange-600' : 'text-gray-400'}`} />
+          </CardHeader>
+          <CardContent>
+            <div className={`text-2xl font-semibold ${AltaCount > 0 ? 'text-orange-600' : ''}`}>{AltaCount}</div>
+            <p className="text-xs text-gray-500 mt-1">tiempo de espera 1 - 2 dias</p>
+          </CardContent>
+        </Card>
+        <Card className={normalCount > 0 ? 'border-blue-200 bg-blue-50' : ''}>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Normal</CardTitle>
+            <Clock className={`h-4 w-4 ${normalCount > 0 ? 'text-blue-600' : 'text-gray-400'}`} />
+          </CardHeader>
+          <CardContent>
+            <div className={`text-2xl font-semibold ${normalCount > 0 ? 'text-blue-600' : ''}`}>{normalCount}</div>
+            <p className="text-xs text-gray-500 mt-1">tiempo de espera 3 - 5 dias</p>
+          </CardContent>
+        </Card>
+        <Card className={bajaCount > 0 ? 'border-green-200 bg-green-50' : ''}>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Baja</CardTitle>
+            <Minus className={`h-4 w-4 ${bajaCount > 0 ? 'text-gray-600' : 'text-gray-400'}`} />
+          </CardHeader>
+          <CardContent>
+            <div className={`text-2xl font-semibold ${bajaCount > 0 ? 'text-gray-600' : ''}`}>{bajaCount}</div>
+            <p className="text-xs text-gray-500 mt-1">tiempo de espera 6 - 10 dias</p>
           </CardContent>
         </Card>
       </div>
