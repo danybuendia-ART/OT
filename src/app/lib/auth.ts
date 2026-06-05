@@ -1,3 +1,5 @@
+import { apiRequest} from '../apiClient';
+
 // Sistema de autenticación simulado
 export interface User {
   id: string;
@@ -11,13 +13,20 @@ const DEMO_USERS = [
   { id: '2', email: 'user@example.com', password: 'user123', name: 'Usuario Demo' },
 ];
 
-export const login = (email: string, password: string): User | null => {
-  const user = DEMO_USERS.find(u => u.email === email && u.password === password);
-  if (user) {
+export const login =async (email: string, password: string) => {
+  
+  const user = await apiRequest('usuarios', { action: 'login', correo: email, pass: password }, 'POST');
+  if(user && user.id){
+    const { password: _, ...userWithoutPassword } = user
+    localStorage.setItem('user', JSON.stringify(userWithoutPassword));
+    return userWithoutPassword;
+   }
+  //const user = DEMO_USERS.find(u => u.email === email && u.password === password);
+  /*if (user) {
     const { password: _, ...userWithoutPassword } = user;
     localStorage.setItem('user', JSON.stringify(userWithoutPassword));
     return userWithoutPassword;
-  }
+  }*/
   return null;
 };
 
