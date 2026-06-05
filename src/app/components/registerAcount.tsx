@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { apiRequest } from '../apiClient';
+import { apiRequest, test } from '../apiClient';
 import { useNavigate } from 'react-router';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -30,8 +30,11 @@ export function registerAcount() {
 
         setLoading(true);
         try {
+            const datos = { action: 'create', nombre: name, correo: email,pass: password };
+            console.log('Enviando datos al servidor:', datos);
+            const response = await apiRequest('usuarios', datos, 'POST');
 
-
+            console.log('Respuesta del servidor:', response);
 
         } catch (err) {
             setError('Error al registrar la cuenta. Inténtalo de nuevo.');
@@ -40,9 +43,9 @@ export function registerAcount() {
             //setLoading(false);
             setSuccess('Cuenta registrada exitosamente.');
             setError('');
-            setTimeout(() => {
+            /*setTimeout(() => {
                 navigate('/login');
-            }, 2000);
+            }, 2000);*/
         }
     };
 
